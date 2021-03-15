@@ -17,6 +17,7 @@ namespace EntPost.Controllers
     public class PostController : Controller
     {
         private readonly PostContext _context;
+        PostContext db;//!!!!!!!!
 
         public PostController(PostContext context)
         {
@@ -58,10 +59,33 @@ namespace EntPost.Controllers
 
 
         // GET: Post
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int page = 1)
         {
-            return View(await _context.Note.ToListAsync());
+            int pageSize = 3;   // количество элементов на странице
+            IQueryable<Note> source = _context.Note;// db.Note.Include(x => x.Id);
+            var count = await source.CountAsync();
+            var items = await source.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+
+
+            PageViewModel pageViewModel = new PageViewModel(count, page, pageSize);
+
+            IndexViewModel viewModel = new IndexViewModel
+            {
+                PageViewModel = pageViewModel,
+                Note = items
+            };
+
+            return View(viewModel);//View(await _context.Note.ToListAsync());
+
+
+
+
+
+
         }
+
+
+
 
         // GET: Post/Details/5
         public async Task<IActionResult> Details(int? id)
@@ -92,7 +116,7 @@ namespace EntPost.Controllers
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Title,Body,ReleaseDate")] Note note)
+        public async Task<IActionResult> Create([Bind("Id,Title,Body,Version,ReleaseDate")] Note note)
         {
             if (ModelState.IsValid)
             {
@@ -124,7 +148,7 @@ namespace EntPost.Controllers
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Title,Body,ReleaseDate")] Note note)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Title,Body,Version,ReleaseDate")] Note note)
         {
             if (id != note.Id)
             {
